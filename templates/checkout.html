@@ -1,0 +1,20 @@
+<h2>Please click the button below to pay your order.</h2>
+<center>
+  <form id="checkoutStripe" action="/api/checkout" method="GET">
+
+    <script
+      src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+      data-key="{data_key}"
+      data-amount="{data_amount}"
+      data-name="{name}"
+      data-description="{order}"
+      data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
+      data-locale="auto"
+      data-zip-code="true">
+    </script>
+
+    <input type="hidden" name="orderId" value="{orderId}" />
+    <input type="hidden" name="userId" value="{userId}" />
+    <input type="hidden" name="tokenId" value="{tokenId}" />
+  </form>
+</center>

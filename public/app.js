@@ -276,7 +276,6 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
 
     var amountOfItems = responsePayload && responsePayload.shoppingcart instanceof Array && responsePayload.shoppingcart.length > -1 ? responsePayload.shoppingcart.length : 0;
     if(amountOfItems > -1){
-      console.log('amountOfItems: ', amountOfItems);
       app.config.cartAmountItems = amountOfItems;
       app.updateShoppingCartAmount();
     }
@@ -327,8 +326,6 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
 
 // Function used to update the shopping cart amount of items based on the one configured at config
 app.updateShoppingCartAmount = function(){
-
-  console.log('amountOfItems 2: ', app.config.cartAmountItems);
   document.querySelector("#shoppingCartAmount").innerHTML = app.config.cartAmountItems;
 }
 
@@ -436,6 +433,12 @@ app.loadDataOnPage = function(){
 
   if(primaryClass == 'ordersList'){
     app.loadOrdersListPage();
+  }
+
+  if(primaryClass == 'checkoutError' || primaryClass == 'checkoutSuccess'){
+    setTimeout(function(){
+      window.location = '/';
+    }, 5000);
   }
 };
 
@@ -635,7 +638,6 @@ app.loadAccountEditPage = function(){
 // Load the checks edit page specifically
 app.loadShoppingCartAmount = function(){
   var userId = typeof(app.config.sessionToken.userIdentifier) == 'string' ? app.config.sessionToken.userIdentifier : false;
-  console.log('userId: ', userId);
   if(userId){
 
     var queryStringObject = {
@@ -645,7 +647,6 @@ app.loadShoppingCartAmount = function(){
     app.client.request(undefined,'api/users','GET',queryStringObject,undefined,function(statusCode,responsePayload){
       if(statusCode == 200){
         var amountItems = responsePayload && responsePayload.shoppingcart instanceof Array ? responsePayload.shoppingcart.length : false;
-        console.log('codigo200: ', amountItems);
         if(amountItems){
           app.config.cartAmountItems = amountItems;
         } else {
@@ -699,8 +700,4 @@ app.init = function(){
 // Call the init processes after the window loads
 window.onload = function(){
   app.init();
-};
-
-stripeTokenCallback = function(token, args){
-  console.log("TOKEN CALLBACK");
 };

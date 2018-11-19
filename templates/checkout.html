@@ -10,11 +10,13 @@
       data-description="{order}"
       data-image="https://stripe.com/img/documentation/checkout/marketplace.png"
       data-locale="auto"
+      token="stripeTokenCallback"
       data-zip-code="true">
     </script>
 
     <input type="hidden" name="orderId" value="{orderId}" />
     <input type="hidden" name="userId" value="{userId}" />
     <input type="hidden" name="tokenId" value="{tokenId}" />
+    <button type="submit" type="hidden"></button>
   </form>
 </center>

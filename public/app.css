@@ -178,6 +178,10 @@ body.menuList .blurb{
   max-width:100%;
 }
 
+.menucta.green:hover{background-color:orange !important;}
+
+.menucta.green:active{background-color:red !important;}
+
 .menuctahelper{
   width: 150px;
   background-color: #1a1a1a;
@@ -224,6 +228,7 @@ body.menuList .blurb{
 .cta.green{
   background-color: #217844 !important;
 }
+
 
 .cta.red{
   background-color: #c83737 !important;
@@ -423,4 +428,20 @@ span + button, span + button:hover {
 #totalAmountCTA{
   margin-top: 20px;
   display: none;
+}
+
+#moveToCartCTA{
+  margin-top: 40px;
+  display: none;
+}
+
+#noOrdersMessage{
+  display: none;
+}
+
+#noOrdersMessage td{
+  text-align: center;
+  font-style: italic;
+  font-size: 20px;
+  padding: 20px;
 }

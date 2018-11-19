@@ -8,7 +8,8 @@ var app = {};
 
 // Config
 app.config = {
-  'sessionToken' : false
+  'sessionToken' : false,
+  'cartAmountItems': 0
 };
 
 // AJAX Client (for RESTful API)
@@ -70,7 +71,7 @@ app.client.request = function(headers,path,method,queryStringObject,payload,call
             var parsedResponse = JSON.parse(responseReturned);
             callback(statusCode,parsedResponse);
           } catch(e){
-            callback(statusCode,false);
+            callback(statusCode,false, false);
           }
 
         }
@@ -97,9 +98,6 @@ app.bindLogoutButton = function(){
 
 // Log the user out then redirect them
 app.logUserOut = function(redirectUser){
-
-
-
 
   // Set redirectUser to default to true
   redirectUser = typeof(redirectUser) == 'boolean' ? redirectUser : true;
@@ -137,7 +135,6 @@ app.bindForms = function(){
         var formId = this.id;
         var path = this.action;
         var method = this.method.toUpperCase();
-
 
         // Hide the error message (if it's currently shown due to a previous error)
         document.querySelector("#"+formId+" .formError").style.display = 'none';
@@ -186,10 +183,6 @@ app.bindForms = function(){
 
         // If the method is DELETE, the payload should be a queryStringObject instead
         var queryStringObject = method == 'DELETE' ? payload : {};
-
-        // Chamei por aqui
-        console.log("VOU CHAMAR O STRIPE POR AQUI");
-
 
         // Call the API
         app.client.request(undefined,path,method,queryStringObject,payload,function(statusCode,responsePayload){
@@ -269,11 +262,11 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
     window.location = '/account/deleted';
   }
 
-  // // If the user just created a new check successfully, redirect back to the dashboard
-  // if(formId == 'checksCreate'){
-  //   window.location = '/checks/all';
-  // }
-  //
+  // If the user just checkout successfully, redirect back to the frontpage
+  if(formId == 'checkoutStripe'){
+    window.location = '/';
+  }
+
   // // If the user just deleted a check, redirect them to the dashboard
   // if(formId == 'checksEdit2'){
   //   window.location = '/checks/all';
@@ -281,25 +274,34 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
 
   if(formId.indexOf('cart_') > -1 ){
 
-    var userId = typeof(app.config.sessionToken.userIdentifier) == 'string' ? app.config.sessionToken.userIdentifier : false;
+    var amountOfItems = responsePayload && responsePayload.shoppingcart instanceof Array && responsePayload.shoppingcart.length > -1 ? responsePayload.shoppingcart.length : 0;
+    if(amountOfItems > -1){
+      console.log('amountOfItems: ', amountOfItems);
+      app.config.cartAmountItems = amountOfItems;
+      app.updateShoppingCartAmount();
+    }
 
+    var userId = typeof(app.config.sessionToken.userIdentifier) == 'string' ? app.config.sessionToken.userIdentifier : false;
     if(userId){
       var headers = {
         'userid' : userId
       };
 
-      app.client.request(headers,'api/cart','GET',undefined,undefined,function(newStatusCode,newResponsePayload){
-        // Display an error on the form if needed
-        if(newStatusCode == 200){
-          // Lets update the shopping cart number of items
-          document.querySelector("#shoppingCartAmount").innerHTML = newResponsePayload.length.toString();
 
-        } else {
-          // Set the formError field with the error text
-          document.querySelector("#"+formId+" .formError").innerHTML = 'Sorry, an error has occured. Please try again.';
-          document.querySelector("#"+formId+" .formError").style.display = 'block';
-        }
-      });
+      // document.querySelector("#shoppingCartAmount").innerHTML = newResponsePayload.length.toString();
+
+      // app.client.request(headers,'api/cart','GET',undefined,undefined,function(newStatusCode,newResponsePayload){
+      //   // Display an error on the form if needed
+      //   if(newStatusCode == 200){
+      //     // Lets update the shopping cart number of items
+      //     document.querySelector("#shoppingCartAmount").innerHTML = newResponsePayload.length.toString();
+      //
+      //   } else {
+      //     // Set the formError field with the error text
+      //     document.querySelector("#"+formId+" .formError").innerHTML = 'Sorry, an error has occured. Please try again.';
+      //     document.querySelector("#"+formId+" .formError").style.display = 'block';
+      //   }
+      // });
     }
   }
 
@@ -322,6 +324,13 @@ app.formResponseProcessor = function(formId,requestPayload,responsePayload){
     }
   }
 };
+
+// Function used to update the shopping cart amount of items based on the one configured at config
+app.updateShoppingCartAmount = function(){
+
+  console.log('amountOfItems 2: ', app.config.cartAmountItems);
+  document.querySelector("#shoppingCartAmount").innerHTML = app.config.cartAmountItems;
+}
 
 // Get the session token from localstorage and set it in the app.config object
 app.getSessionToken = function(){
@@ -424,13 +433,16 @@ app.loadDataOnPage = function(){
   if(primaryClass == 'menuList'){
     app.loadMenuPage();
   }
+
+  if(primaryClass == 'ordersList'){
+    app.loadOrdersListPage();
+  }
 };
 
 // Load the shopping cart edit page specifically
 app.loadCartEditPage = function(){
 
   var userId = typeof(app.config.sessionToken.userIdentifier) == 'string' ? app.config.sessionToken.userIdentifier : false;
-
   if(userId){
 
     var headers = {
@@ -443,7 +455,7 @@ app.loadCartEditPage = function(){
         if(shoppingCartItems.length > 0){
           // Show each shopping cart item as a new row in the table
           shoppingCartItems.forEach(function(shoppingCartItemName){
-            // Get the data for the check
+            // Get the data for the menu item
             var newQueryStringObject = {
               'name' : shoppingCartItemName
             };
@@ -460,9 +472,9 @@ app.loadCartEditPage = function(){
                 td0.innerHTML = responsePayload.displayName;
                 td1.innerHTML = responsePayload.price;
                 td2.innerHTML = responsePayload.description;
-                td3.innerHTML = '<a href="/cart/delete?item='+responsePayload.name+'">Delete</a>';;
+                td3.innerHTML = '<a href="/cart/delete?item='+responsePayload.name+'">Delete</a>';
               } else {
-                console.log("Error trying to load check ID: ",checkId);
+                console.log("Error trying to load item name: ", shoppingCartItemName);
               }
             });
           });
@@ -479,11 +491,6 @@ app.loadCartEditPage = function(){
               console.log("Error trying to load the shopping cart total amount");
             }
           });
-
-
-
-
-
         } else{
           // Show 'you have no checks' message
           document.getElementById("noItemsOnShoppingCartMessage").style.display = 'table-row';
@@ -505,9 +512,64 @@ app.loadCartEditPage = function(){
   } else {
     app.logUserOut();
   }
+};
 
+app.loadOrdersListPage = function(){
+  var userId = typeof(app.config.sessionToken.userIdentifier) == 'string' ? app.config.sessionToken.userIdentifier : false;
+  if(userId){
 
+    var queryStringObject = {
+      'id' : userId
+    };
 
+    app.client.request(undefined,'api/users','GET',queryStringObject,undefined,function(statusCode,responsePayload){
+      if(statusCode == 200){
+          var userOrders =  typeof(responsePayload) == 'object' && responsePayload.orders instanceof Array ? responsePayload.orders : [];
+          if(userOrders.length > 0){
+            userOrders.forEach(function(orderId){
+              var headers = {
+                'userid' : userId
+              };
+
+              var newQueryStringObject = {
+                'id' : orderId
+              };
+
+              // Get the data for the menu item
+              app.client.request(headers,'api/order','GET',newQueryStringObject,undefined,function(statusCode,responsePayload){
+                if(statusCode == 200){
+                  // Make the item data into a table row
+                  var table = document.getElementById("ordersListTable");
+                  var tr = table.insertRow(-1);
+                  var td0 = tr.insertCell(0);
+                  var td1 = tr.insertCell(1);
+                  var td2 = tr.insertCell(2);
+                  var td3 = tr.insertCell(3);
+                  var td4 = tr.insertCell(4);
+                  td0.innerHTML = responsePayload.id;
+                  td1.innerHTML = responsePayload.mail_sent;
+                  td2.innerHTML = responsePayload.payed;
+                  td3.innerHTML = responsePayload.totalPrice;
+                  td4.innerHTML = responsePayload.items.length;
+                } else {
+                  console.log("Error trying to load order id: ", orderId);
+                }
+              });
+            });
+          } else{
+            // Show 'you have no checks' message
+            document.getElementById("noOrdersMessage").style.display = 'table-row';
+
+            // Show the createCheck CTA
+            document.getElementById("moveToCartCTA").style.display = 'block';
+          }
+        } else {
+            app.logUserOut();
+        }
+      });
+    } else {
+      app.logUserOut();
+    }
 };
 
 // Load the cart delete page specifically
@@ -570,114 +632,30 @@ app.loadAccountEditPage = function(){
   }
 };
 
-// Load the dashboard page specifically
-app.loadChecksListPage = function(){
-  // Get the phone number from the current token, or log the user out if none is there
-  var phone = typeof(app.config.sessionToken.phone) == 'string' ? app.config.sessionToken.phone : false;
-  if(phone){
-    // Fetch the user data
+// Load the checks edit page specifically
+app.loadShoppingCartAmount = function(){
+  var userId = typeof(app.config.sessionToken.userIdentifier) == 'string' ? app.config.sessionToken.userIdentifier : false;
+  console.log('userId: ', userId);
+  if(userId){
+
     var queryStringObject = {
-      'phone' : phone
+      'id' : userId
     };
+
     app.client.request(undefined,'api/users','GET',queryStringObject,undefined,function(statusCode,responsePayload){
       if(statusCode == 200){
-
-        // Determine how many checks the user has
-        var allChecks = typeof(responsePayload.checks) == 'object' && responsePayload.checks instanceof Array && responsePayload.checks.length > 0 ? responsePayload.checks : [];
-        if(allChecks.length > 0){
-
-          // Show each created check as a new row in the table
-          allChecks.forEach(function(checkId){
-            // Get the data for the check
-            var newQueryStringObject = {
-              'id' : checkId
-            };
-            app.client.request(undefined,'api/checks','GET',newQueryStringObject,undefined,function(statusCode,responsePayload){
-              if(statusCode == 200){
-                var checkData = responsePayload;
-                // Make the check data into a table row
-                var table = document.getElementById("checksListTable");
-                var tr = table.insertRow(-1);
-                tr.classList.add('checkRow');
-                var td0 = tr.insertCell(0);
-                var td1 = tr.insertCell(1);
-                var td2 = tr.insertCell(2);
-                var td3 = tr.insertCell(3);
-                var td4 = tr.insertCell(4);
-                td0.innerHTML = responsePayload.method.toUpperCase();
-                td1.innerHTML = responsePayload.protocol+'://';
-                td2.innerHTML = responsePayload.url;
-                var state = typeof(responsePayload.state) == 'string' ? responsePayload.state : 'unknown';
-                td3.innerHTML = state;
-                td4.innerHTML = '<a href="/checks/edit?id='+responsePayload.id+'">View / Edit / Delete</a>';
-              } else {
-                console.log("Error trying to load check ID: ",checkId);
-              }
-            });
-          });
-
-          if(allChecks.length < 5){
-            // Show the createCheck CTA
-            document.getElementById("createCheckCTA").style.display = 'block';
-          }
-
+        var amountItems = responsePayload && responsePayload.shoppingcart instanceof Array ? responsePayload.shoppingcart.length : false;
+        console.log('codigo200: ', amountItems);
+        if(amountItems){
+          app.config.cartAmountItems = amountItems;
         } else {
-          // Show 'you have no checks' message
-          document.getElementById("noChecksMessage").style.display = 'table-row';
-
-          // Show the createCheck CTA
-          document.getElementById("createCheckCTA").style.display = 'block';
-
+          app.config.cartAmountItems = 0;
         }
+        app.updateShoppingCartAmount();
       } else {
-        // If the request comes back as something other than 200, log the user our (on the assumption that the api is temporarily down or the users token is bad)
         app.logUserOut();
       }
     });
-  } else {
-    app.logUserOut();
-  }
-};
-
-
-// Load the checks edit page specifically
-app.loadChecksEditPage = function(){
-  // Get the check id from the query string, if none is found then redirect back to dashboard
-  var id = typeof(window.location.href.split('=')[1]) == 'string' && window.location.href.split('=')[1].length > 0 ? window.location.href.split('=')[1] : false;
-  if(id){
-    // Fetch the check data
-    var queryStringObject = {
-      'id' : id
-    };
-    app.client.request(undefined,'api/checks','GET',queryStringObject,undefined,function(statusCode,responsePayload){
-      if(statusCode == 200){
-
-        // Put the hidden id field into both forms
-        var hiddenIdInputs = document.querySelectorAll("input.hiddenIdInput");
-        for(var i = 0; i < hiddenIdInputs.length; i++){
-            hiddenIdInputs[i].value = responsePayload.id;
-        }
-
-        // Put the data into the top form as values where needed
-        document.querySelector("#checksEdit1 .displayIdInput").value = responsePayload.id;
-        document.querySelector("#checksEdit1 .displayStateInput").value = responsePayload.state;
-        document.querySelector("#checksEdit1 .protocolInput").value = responsePayload.protocol;
-        document.querySelector("#checksEdit1 .urlInput").value = responsePayload.url;
-        document.querySelector("#checksEdit1 .methodInput").value = responsePayload.method;
-        document.querySelector("#checksEdit1 .timeoutInput").value = responsePayload.timeoutSeconds;
-        var successCodeCheckboxes = document.querySelectorAll("#checksEdit1 input.successCodesInput");
-        for(var i = 0; i < successCodeCheckboxes.length; i++){
-          if(responsePayload.successCodes.indexOf(parseInt(successCodeCheckboxes[i].value)) > -1){
-            successCodeCheckboxes[i].checked = true;
-          }
-        }
-      } else {
-        // If the request comes back as something other than 200, redirect back to dashboard
-        window.location = '/checks/all';
-      }
-    });
-  } else {
-    window.location = '/checks/all';
   }
 };
 
@@ -710,9 +688,19 @@ app.init = function(){
   // Load data on page
   app.loadDataOnPage();
 
+  // Update shopping cart value based on api users to get user's shopping cart
+  app.loadShoppingCartAmount();
+
+  // Update the shopping cart amount in DOM
+  app.updateShoppingCartAmount();
+
 };
 
 // Call the init processes after the window loads
 window.onload = function(){
   app.init();
+};
+
+stripeTokenCallback = function(token, args){
+  console.log("TOKEN CALLBACK");
 };

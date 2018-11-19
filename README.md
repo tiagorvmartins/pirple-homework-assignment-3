@@ -290,3 +290,14 @@ Example:
 
 
 ###### *Note: Public and Private key generated using a third-party library (at https://wiki.openssl.org/index.php/Binaries) of OpenSSL.*
+###### *Note: All the credits for favicon icon's usage goes to prettycons (https://www.flaticon.com/authors/prettycons).*
+###### *Note: All the credits for shopping cart icon's usage goes to Gregor Cresnar at prettycons (https://www.flaticon.com/authors/gregor-cresnar).*
+
+
+#### *Pizza images credits:*
+
+##### *Photo by Alan Hardman on Unsplash*
+##### *Photo by Thomas Tucker on Unsplash*
+##### *Photo by ivan Torres on Unsplash*
+##### *Photo by ivan Kristina Bratko on Unsplash*
+##### *Photo by ivan Matteo Vistocco*

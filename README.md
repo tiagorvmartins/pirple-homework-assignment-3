@@ -35,6 +35,8 @@ Requires authentication in header, the token key like this:
 
 token : 3vwqxudaw6fmf9sowjdu
 
+Example payload request:
+
 ```json
 {
 	"id": "a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98",    //required field
@@ -61,6 +63,8 @@ ________________________________________________________________________________
 
 #### [POST]  http://localhost:3000/login
 
+Example payload request:
+
 ```json
 {
 	"emailAddress": "your_address@your_domain.com",
@@ -78,13 +82,9 @@ ________________________________________________________________________________
 
 ### /logout
 
-#### [POST]  http://localhost:3000/logout
+#### [POST]  http://localhost:3000/logout?id=userid
 
-Requires authentication in header, the token key like this:
-
-token : 3vwqxudaw6fmf9sowjdu
-
-Note: it removes the token from the system itself.
+Note: it removes the token from the system itself logging out the user. 
 
 
 ______________________________________________________________________________________________________________
@@ -95,9 +95,11 @@ ________________________________________________________________________________
 
 #### [GET] http://localhost:3000/menu
 
-Requires authentication in header, the token key like this:
+Requires authentication in header, the token key and also the userid in header:
 
 token : 3vwqxudaw6fmf9sowjdu
+userid: 19231239sadkanxakjsndaskjnkxajsnd
+
 
 Returns the list of possible pizza's to select, not hardcoded, but each pizza exist on a separate file called 'menuitems' in the data folder.
 
@@ -110,9 +112,10 @@ ________________________________________________________________________________
 
 #### [GET] http://localhost:3000/cart
 
-Requires authentication in header, the token key like this:
+Requires authentication in header, the token key and also the userid in header:
 
 token : 3vwqxudaw6fmf9sowjdu
+userid: 19231239sadkanxakjsndaskjnkxajsnd
 
 Returns the current list of items in user's cart.
 
@@ -126,13 +129,15 @@ ________________________________________________________________________________
 #### [PUT] http://localhost:3000/cart
 
 
-Requires authentication and userid in header, like this:
+Requires authentication in header, like this:
 
 token : 3vwqxudaw6fmf9sowjdu
-userid: a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98
+
+And example payload:
 
 ```json
 {
+	"userid": "asdjxas123123xajksdnaxasdk213",
 	"item":"cheese_bacon"
 }
 ```
@@ -140,16 +145,17 @@ userid: a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98
 Note: item should be a valid pizza name from the list of available pizzas. It allows multiple to add multiple pizzas with same name to the cart. After adding the shoppingcart array of the user object is updated.
 
 
-#### [DELETE] http://localhost:3000/cart
+#### [DELETE] http://localhost:3000/cart?item="pizza_name"
 
-Requires authentication and userid in header, like this:
+Requires authentication in header, like this:
 
 token : 3vwqxudaw6fmf9sowjdu
-userid: a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98
+
+And example payload:
 
 ```json
 {
-	"item":"cheese_bacon"
+	"userid": "a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98"
 }
 ```
 
@@ -162,7 +168,7 @@ ________________________________________________________________________________
 
 ### /order
 
-#### [GET] http://localhost:3000/order
+#### [GET] http://localhost:3000/order?id=njsf8asdchasdiufhas8casd
 
 Requires authentication and userid in header, like this:
 
@@ -190,11 +196,15 @@ Example:
 
 #### [POST] http://localhost:3000/order
 
-Requires authentication and userid in header, like this:
+Requires authentication in header, like this:
 
 token : 3vwqxudaw6fmf9sowjdu
-userid: a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98
 
+And payload with userid:
+
+```json
+	"userid": "a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98"
+```
 
 Note: it creates a new order with all the items on user's shopping cart and save it on the system, using the data folder called 'orders', the total price of the order is also calculated based on each price of each pizza on the order.
 After placing the order the shopping cart gets empty and a new order id goes to the orders array of user object as the following example shows.
@@ -221,14 +231,14 @@ ________________________________________________________________________________
 
 #### [POST] http://localhost:3000/checkout
 
-Requires authentication and userid in header, like this:
+Requires authentication in header, like this:
 
 token : 3vwqxudaw6fmf9sowjdu
-userid: a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98
 
-Also requires the following data on body (json), the id of the order to checkout and the stripe token to apply the charge (in this case it's a test token)
+Also requires the following data on body (json), the userid, the id of the order to checkout and the stripe token to apply the charge (in this case it's a test token)
 ```json
 {
+	"userid": "a688f4dbc11ead7d9902ef10347e2eebec1c9eae38521cfb3e6bc19aa0c1df98",
 	"orderId":"wr5pwe84uqbayywbytqe",
 	"stripeToken":"tok_mastercard_debit"
 }
@@ -251,7 +261,32 @@ Example of a order in which both payment and email were sent with success:
 }
 ```
 
+______________________________________________________________________________________________________________
 
+
+
+### /item
+
+#### [GET] http://localhost:3000/item?name=pizza_name
+
+Requires authentication in header and userid, like this:
+
+token: 3vwqxudaw6fmf9sowjdu
+userid: kmaclksdmfaslmcaslkdfmmalsd21349dj
+
+Then returns a json body representing the item information (available in menuitems folder) to be dynamically placed on the menu page.
+
+Example:
+```json
+{
+    "id":1,
+    "name":"double_cheese",
+    "displayName":"Double Cheese",
+    "price":10.99,
+    "description":"The right amount of double cheese, we really believe!", 
+    "imageSrc":"public/double_cheese.jpg"
+}
+```
 
 
 ###### *Note: Public and Private key generated using a third-party library (at https://wiki.openssl.org/index.php/Binaries) of OpenSSL.*
